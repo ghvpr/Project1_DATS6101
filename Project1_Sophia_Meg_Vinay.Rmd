@@ -1,6 +1,6 @@
 ---
 title: "HW 6: Hypothesis Tests"
-author: "Ruofei(Sophia) Du"
+author: "Ruofei(Sophia) Du, Meghan Phillips, Harivinay Gujjula"
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -164,4 +164,5 @@ ggplot(spo1, aes(x = tempo, y = popularity)) +
   ) +
   theme_minimal()
 ```
+
 The diagram is not clear, maybe we should do some sampling. 
