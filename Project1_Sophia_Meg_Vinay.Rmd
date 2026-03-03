@@ -446,6 +446,11 @@ pop_80df <- spo1 %>%
 pop_100df <- spo1 %>%
   filter(popularity >= 80 & popularity <= 100)
 ```
+#Correlation between explicit and popularity- shows extremely low
+```{r}
+spo1$explicit_num<- as.numeric(spo1$explicit)
+cor(spo1$popularity, spo1$explicit_num)
+````
 
 #Calculating correlation values of audio features(danceability, energy, tempo and valence) to popularity for each group
 
