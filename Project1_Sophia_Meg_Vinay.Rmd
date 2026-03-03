@@ -166,3 +166,36 @@ ggplot(spo1, aes(x = tempo, y = popularity)) +
 ```
 
 The diagram is not clear, maybe we should do some sampling. 
+
+Meg-
+Can we see any differences in Genre when we look at Tempo x Popularity? There are too many points! 
+
+```{r}
+ggplot(spo1, aes(x = tempo, y = popularity, color= track_genre)) + geom_point(alpha = 0.5)
+```
+What is another way to look at plots by Genre? Possibly in facets!
+```{r}
+ggplot(spo1, aes(x = tempo, y = popularity)) + geom_point(color= "blue", alpha = 0.3) + facet_wrap(~ track_genre) 
+```
+
+Are explicit tracks more or less popular than non-explicit tracks?
+we want to do a t-test to check:
+```{r}
+t.test(popularity ~ explicit, data = spo1)
+```
+this returns a p-value <2e-16, which is significant
+```{r}
+lower <- quantile(spo1$popularity, 0.25, na.rm = TRUE)
+upper <- quantile(spo1$popularity, 0.75, na.rm = TRUE)
+spo1_top_pop<- subset(spo1, popularity >= upper)
+t.test(popularity ~ explicit, data = spo1_top_pop)
+spo1_middle_pop <- subset(spo1, popularity > lower & popularity <= upper)
+t.test(popularity ~ explicit, data = spo1_middle_pop)
+spo1_bottom_pop <- subset(spo1, popularity < lower)
+t.test(popularity ~ explicit, data = spo1_bottom_pop)
+```
+```{r}
+cut_pop90<- quantile(spo1$popularity, 0.90)
+cut_pop95<- quantile(spo1$popularity, 0.95)
+t.test(popularity ~ explicit, data = spo1_top_pop1)
+```
