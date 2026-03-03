@@ -196,6 +196,9 @@ t.test(popularity ~ explicit, data = spo1_bottom_pop)
 ```
 ```{r}
 cut_pop90<- quantile(spo1$popularity, 0.90)
+spo1_pop90 <- subset(spo1, popularity > cut_pop90)
 cut_pop95<- quantile(spo1$popularity, 0.95)
-t.test(popularity ~ explicit, data = spo1_top_pop1)
+spo1_pop95 <- subset(spo1, popularity > cut_pop95)
+t.test(popularity ~ explicit, data = spo1_pop90)
+t.test(popularity ~ explicit, data = spo1_pop95)
 ```
