@@ -302,7 +302,7 @@ cor_long$Pop_Group <- factor(cor_long$Pop_Group,
                              levels = c("0-20","20-40","40-60","60-80","80-100"))
 ```
 
-#Plotting a line and bar plot for correlation values between danceability and popularity across different popularity groups
+#Plotting a line plot for correlation values between danceability and popularity across different popularity groups
 ```{r}
 dance_cor <- cor_long %>% filter(Feature == "danceability")
 
@@ -315,19 +315,9 @@ p <- ggplot(dance_cor, aes(x = Correlation , y = Pop_Group, group = 1)) +
 
 p
 ggsave("danceability_corr_across_groups.png", p, width = 7, height = 4.5, dpi = 300)
-
-
-p <- ggplot(dance_cor, aes(x = Correlation, y = Pop_Group)) +
-  geom_col( fill = "firebrick") +
-  theme_minimal() +
-  labs(title = "Correlation(popularity, danceability) across popularity groups",
-       x = "Correlation", y = "Popularity group")
-
-p
-ggsave("danceability_corr_across_groups_bar.png", p, width = 7, height = 4.5, dpi = 300)
 ```
 
-#Plotting a line and bar plot for correlation values between energy and popularity across different popularity groups
+#Plotting a line plot for correlation values between energy and popularity across different popularity groups
 
 ```{r}
 energy_cor <- cor_long %>% filter(Feature == "energy")
@@ -342,18 +332,9 @@ p <- ggplot(energy_cor, aes(x = Correlation , y = Pop_Group, group = 1)) +
 p
 ggsave("energy_corr_across_groups.png", p, width = 7, height = 4.5, dpi = 300)
 
-
-p <- ggplot(dance_cor, aes(x = Correlation, y = Pop_Group)) +
-  geom_col( fill = "steelblue") +
-  theme_minimal() +
-  labs(title = "Correlation(popularity, energy) across popularity groups",
-       x = "Correlation", y = "Popularity group")
-
-p
-ggsave("energy_corr_across_groups_bar.png", p, width = 7, height = 4.5, dpi = 300)
 ```
 
-#Plotting a line and bar plot for correlation values between valence and popularity across different popularity groups
+#Plotting a line plot for correlation values between valence and popularity across different popularity groups
 
 ```{r}
 valence_cor <- cor_long %>% filter(Feature == "valence")
@@ -367,19 +348,9 @@ p <- ggplot(valence_cor, aes(x = Correlation , y = Pop_Group, group = 1)) +
 
 p
 ggsave("valence_corr_across_groups.png", p, width = 7, height = 4.5, dpi = 300)
-
-
-p <- ggplot(valence_cor, aes(x = Correlation, y = Pop_Group)) +
-  geom_col( fill = "aquamarine") +
-  theme_minimal() +
-  labs(title = "Correlation(popularity, valence) across popularity groups",
-       x = "Correlation", y = "Popularity group")
-
-p
-ggsave("valence_corr_across_groups_bar.png", p, width = 7, height = 4.5, dpi = 300)
 ```
 
-#Plottine a line and bar plot for correaltion values between tempo and popularity across different popularity groups
+#Plotting a line plot for correaltion values between tempo and popularity across different popularity groups
 
 ```{r}
 tempo_cor <- cor_long %>% filter(Feature == "tempo")
@@ -394,13 +365,4 @@ p <- ggplot(tempo_cor, aes(x = Correlation , y = Pop_Group, group = 1)) +
 p
 ggsave("tempo_corr_across_groups.png", p, width = 7, height = 4.5, dpi = 300)
 
-
-p <- ggplot(tempo_cor, aes(x = Correlation, y = Pop_Group)) +
-  geom_col( fill = "coral") +
-  theme_minimal() +
-  labs(title = "Correlation(popularity, tempo) across popularity groups",
-       x = "Correlation", y = "Popularity group")
-
-p
-ggsave("tempo_corr_across_groups_bar.png", p, width = 7, height = 4.5, dpi = 300)
 ```
