@@ -1,5 +1,5 @@
 ---
-title: "HW 6: Hypothesis Tests"
+title: "Project 1"
 author: "Ruofei(Sophia) Du, Meghan Phillips, Harivinay Gujjula"
 date: "`r Sys.Date()`"
 output:
@@ -25,7 +25,7 @@ library(ezids)
 library(dplyr)
 ```
 
-
+-Sophia
 ```{r setup, include=FALSE}
 # Some of common RMD options (and the defaults) are: 
 # include=T, eval=T, echo=T, results='hide'/'asis'/'markup',..., collapse=F, warning=T, message=T, error=T, cache=T, fig.width=6, fig.height=4, fig.dim=c(6,4) #inches, fig.align='left'/'center','right', 
@@ -167,6 +167,236 @@ ggplot(spo1, aes(x = tempo, y = popularity)) +
 ```
 
 The diagram is not clear, maybe we should do some sampling. 
+```{r}
+cor(spo1$danceability, spo1$popularity)
+cor(spo1$energy, spo1$popularity)
+cor(spo1$valence, spo1$popularity)
+cor(spo1$tempo, spo1$popularity)
+```
+```{r}
+spo1$pop_group <- cut(
+  spo1$popularity,
+  breaks = c(0, 20, 40, 60, 80, 100),
+  labels = c("Very Low", "Low", "Medium", "High", "Very High"),
+  include.lowest = TRUE
+)
+
+spo1$pop_group <- as.factor(spo1$pop_group)
+table(spo1$pop_group)
+```
+```{r}
+ggplot(spo1, aes(x = pop_group, y = danceability, fill = pop_group)) +
+  geom_boxplot() +
+  labs(
+    title = "Danceability across Popularity Groups",
+    x = "Popularity Group",
+    y = "Danceability"
+  ) +
+  theme_minimal() +
+  guides(fill = "none")
+ggplot(spo1, aes(x = pop_group, y = energy, fill = pop_group)) +
+  geom_boxplot() +
+  labs(
+    title = "Energy across Energy Groups",
+    x = "Popularity Group",
+    y = "Energy"
+  ) +
+  theme_minimal() +
+  guides(fill = "none")
+ggplot(spo1, aes(x = pop_group, y = valence, fill = pop_group)) +
+  geom_boxplot() +
+  labs(
+    title = "Valence across Popularity Groups",
+    x = "Popularity Group",
+    y = "Valence"
+  ) +
+  theme_minimal() +
+  guides(fill = "none")
+ggplot(spo1, aes(x = pop_group, y = tempo, fill = pop_group)) +
+  geom_boxplot() +
+  labs(
+    title = "Danceability across Popularity Groups",
+    x = "Popularity Group",
+    y = "Tempo"
+  ) +
+  theme_minimal() +
+  guides(fill = "none")
+```
+```{r}
+anova_dance <- aov(danceability ~ pop_group, data = spo1)
+summary(anova_dance)
+```
+```{r}
+get_eta_sq <- function(feature_name, data) {
+  formula <- as.formula(paste(feature_name, "~ pop_group"))
+  model <- aov(formula, data = data)
+  tab <- summary(model)[[1]]
+  
+  SS_between <- tab["pop_group", "Sum Sq"]
+  SS_total   <- sum(tab[, "Sum Sq"])
+  
+  eta_sq <- SS_between / SS_total
+  
+  return(list(
+    feature = feature_name,
+    eta_sq = eta_sq,
+    p_value = tab["pop_group", "Pr(>F)"]
+  ))
+}
+results <- rbind(
+  unlist(get_eta_sq("danceability", spo1)),
+  unlist(get_eta_sq("energy", spo1)),
+  unlist(get_eta_sq("valence", spo1)),
+  unlist(get_eta_sq("tempo", spo1))
+)
+
+results <- as.data.frame(results)
+results
+```
+```{r}
+library(dplyr)
+
+genre_profile <- spo1 %>%
+  group_by(track_genre) %>%
+  summarise(
+    danceability = mean(danceability),
+    energy = mean(energy),
+    valence = mean(valence),
+    tempo = mean(tempo),
+    n = n(),
+    .groups = "drop"
+  )
+genre_scaled <- scale(
+  genre_profile[, c(
+    "danceability",
+    "energy",
+    "valence",
+    "tempo"
+  )]
+)
+```
+```{r}
+set.seed(123)
+
+wss <- sapply(1:10, function(k) {
+  kmeans(genre_scaled, centers = k, nstart = 25)$tot.withinss
+})
+
+plot(1:10, wss,
+     type = "b",
+     pch = 19,
+     frame = FALSE,
+     xlab = "Number of clusters K",
+     ylab = "Total within-clusters sum of squares",
+     main = "Elbow Method for Optimal K")
+```
+```{r}
+set.seed(123)
+
+k4 <- kmeans(genre_scaled, centers = 4, nstart = 25)
+
+genre_profile$cluster <- factor(k4$cluster)
+library(ggplot2)
+
+ggplot(genre_profile,
+       aes(x = energy,
+           y = danceability,
+           color = cluster,
+           label = track_genre)) +
+  geom_point(size = 3, alpha = 0.8) +
+  labs(
+    title = "Genre Clusters Based on Audio Features",
+    x = "Energy (mean)",
+    y = "Danceability (mean)",
+    color = "Cluster"
+  ) +
+  theme_minimal()
+ggplot(genre_profile,
+       aes(x = valence,
+           y = tempo,
+           color = cluster)) +
+  geom_point(size = 3, alpha = 0.8) +
+  labs(
+    title = "Cluster Visualization: Valence vs Tempo",
+    x = "Valence (mean)",
+    y = "Tempo (mean)",
+    color = "Cluster"
+  ) +
+  theme_minimal()
+table(genre_profile$cluster)
+```
+```{r}
+spo1 <- spo1 %>%
+  left_join(
+    genre_profile[, c("track_genre", "cluster")],
+    by = "track_genre"
+  )
+table(spo1$cluster)
+ggplot(spo1,
+       aes(x = danceability,
+           y = popularity,
+           color = cluster)) +
+  geom_point(alpha = 0.4) +
+  labs(
+    title = "Popularity vs Danceability by Cluster",
+    x = "Danceability",
+    y = "Popularity",
+    color = "Cluster"
+  ) +
+  theme_minimal()
+ggplot(spo1,
+       aes(x = energy,
+           y = popularity,
+           color = cluster)) +
+  geom_point(alpha = 0.4) +
+  labs(
+    title = "Popularity vs Energy by Cluster",
+    x = "Energy",
+    y = "Popularity",
+    color = "Cluster"
+  ) +
+  theme_minimal()
+ggplot(spo1,
+       aes(x = valence,
+           y = popularity,
+           color = cluster)) +
+  geom_point(alpha = 0.4) +
+  labs(
+    title = "Popularity vs Valence by Cluster",
+    x = "Valence",
+    y = "Popularity",
+    color = "Cluster"
+  ) +
+  theme_minimal()
+ggplot(spo1,
+       aes(x = tempo,
+           y = popularity,
+           color = cluster)) +
+  geom_point(alpha = 0.4) +
+  labs(
+    title = "Popularity vs Tempo by Cluster",
+    x = "Tempo",
+    y = "Popularity",
+    color = "Cluster"
+  ) +
+  theme_minimal()
+```
+```{r}
+cluster_genre_tab <- table(spo1$cluster, spo1$track_genre)
+cluster_genre_tab[1:4, 1:10]
+```
+```{r}
+ggplot(spo1,
+       aes(x = danceability, fill = track_genre)) +
+  geom_bar(position = "fill") +
+  labs(
+    title = "Genre Distribution across Danceability Levels",
+    x = "Danceability Level",
+    y = "Proportion",
+    fill = "Genre"
+  ) +
+  theme_minimal()
+```
 
 Meg-
 Can we see any differences in Genre when we look at Tempo x Popularity? There are too many points! 
