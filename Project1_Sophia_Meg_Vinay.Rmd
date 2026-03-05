@@ -72,6 +72,121 @@ sum(spo1$tempo == 0)
 write.csv(spo1,"cleaned_spodata.csv")
 ```
 
+```{r}
+spo1$family <- case_when(
+  spo1$track_genre %in% c("rock","alt-rock","hard-rock","metal",
+    "heavy-metal","death-metal","black-metal","metalcore","grunge",
+    "punk","punk-rock","emo","psych-rock","goth","hardcore",
+    "grindcore","rock-n-roll","rockabilly","j-rock","alternative",
+    "british","guitar","indie") ~ "Rock/Metal",
+  
+  spo1$track_genre %in% c("edm","electronic","electro","house",
+    "deep-house","chicago-house","progressive-house","techno","trance",
+    "dubstep","drum-and-bass","garage","disco","ambient","chill",
+    "idm","minimal-techno","detroit-techno","breakbeat","hardstyle",
+    "industrial","club","dance","trip-hop","happy","party",
+    "hip-hop","r-n-b","funk","soul","groove") ~ "Electronic/Dance",
+  
+  spo1$track_genre %in% c("latin","latino","reggaeton","salsa",
+    "samba","brazil","mpb","pagode","sertanejo","forro","tango",
+    "spanish","afrobeat","world-music","turkish","iranian","malay",
+    "indian","french","german","dancehall","reggae","ska",
+    "dub","romance",
+    "pop","k-pop","j-pop","pop-film","power-pop","synth-pop",
+    "cantopop","mandopop","indie-pop","j-idol","j-dance",
+    "swedish","anime","disney") ~ "Latin/Pop",
+  
+  TRUE ~ "Acoustic/Classical"
+)
+
+
+spo1$family <- as.factor(spo1$family)
+table(spo1$family)
+```
+Danceability vs Energy
+```{r}
+genre_profile <- spo1 %>%
+  group_by(track_genre) %>%
+  summarise(
+    danceability = mean(danceability),
+    energy = mean(energy),
+    valence = mean(valence),
+    tempo = mean(tempo),
+    n = n(),
+    .groups = "drop"
+  )
+genre_family <- spo1 %>%
+  select(track_genre, family) %>%
+  distinct()
+
+genre_profile <- genre_profile %>%
+  left_join(genre_family, by = "track_genre")
+ggplot(genre_profile,
+       aes(x = energy, y = danceability, color = family)) +
+  geom_point(size = 3, alpha = 0.8) +
+  labs(title = "Genre Distribution by Music Family: Energy vs Danceability",
+       x = "Energy (mean)", y = "Danceability (mean)", color = "Family") +
+  theme_minimal()
+
+
+```
+Valence vs Tempo
+```{r}
+ggplot(genre_profile,
+       aes(x = valence, y = tempo, color = family)) +
+  geom_point(size = 3, alpha = 0.8) +
+  labs(title = "Genre Distribution by Music Family: Valence vs Tempo",
+       x = "Valence (mean)", y = "Tempo (mean)", color = "Family") +
+  theme_minimal()
+```
+```{r}
+
+anova_pop_fam <- aov(popularity ~ family, data = spo1)
+summary(anova_pop_fam)
+
+tab_pop <- summary(anova_pop_fam)[[1]]
+eta_sq_pop <- tab_pop[1, "Sum Sq"] / sum(tab_pop[, "Sum Sq"])
+cat(sprintf("Eta squared (η²) = %.4f\n", eta_sq_pop))
+```
+```{r}
+spo1 %>%
+  group_by(family) %>%
+  summarise(mean_popularity = mean(popularity)) %>%
+  arrange(desc(mean_popularity))
+```
+```{r}
+spo1 %>%
+  group_by(family) %>%
+  summarise(
+    danceability = mean(danceability),
+    energy       = mean(energy),
+    valence      = mean(valence),
+    tempo        = mean(tempo)
+  )
+```
+```{r}
+get_eta_sq_fam <- function(model) {
+  tab <- summary(model)[[1]]
+  round(tab[1, "Sum Sq"] / sum(tab[, "Sum Sq"]), 4)
+}
+anova_dance_fam   <- aov(danceability ~ family, data = spo1)
+anova_energy_fam  <- aov(energy       ~ family, data = spo1)
+anova_valence_fam <- aov(valence      ~ family, data = spo1)
+anova_tempo_fam   <- aov(tempo        ~ family, data = spo1)
+
+summary(anova_dance_fam)
+summary(anova_energy_fam)
+summary(anova_valence_fam)
+summary(anova_tempo_fam)
+
+cat("Eta squared:\n")
+cat(sprintf("  Danceability: %.4f\n", get_eta_sq_fam(anova_dance_fam)))
+cat(sprintf("  Energy:       %.4f\n", get_eta_sq_fam(anova_energy_fam)))
+cat(sprintf("  Valence:      %.4f\n", get_eta_sq_fam(anova_valence_fam)))
+cat(sprintf("  Tempo:        %.4f\n", get_eta_sq_fam(anova_tempo_fam)))
+```
+
+Q2
 Now let's start with EDA. First, we plot some ggplots to observe the distribution. 
 ```{r}
 library(ggplot2)
@@ -166,7 +281,7 @@ ggplot(spo1, aes(x = tempo, y = popularity)) +
   theme_minimal()
 ```
 
-The diagram is not clear, maybe we should do some sampling. 
+The diagram is not clear.
 ```{r}
 cor(spo1$danceability, spo1$popularity)
 cor(spo1$energy, spo1$popularity)
@@ -215,7 +330,7 @@ ggplot(spo1, aes(x = pop_group, y = valence, fill = pop_group)) +
 ggplot(spo1, aes(x = pop_group, y = tempo, fill = pop_group)) +
   geom_boxplot() +
   labs(
-    title = "Danceability across Popularity Groups",
+    title = "Tempo across Popularity Groups",
     x = "Popularity Group",
     y = "Tempo"
   ) +
@@ -253,149 +368,77 @@ results <- rbind(
 results <- as.data.frame(results)
 results
 ```
+
 ```{r}
-library(dplyr)
-
-genre_profile <- spo1 %>%
-  group_by(track_genre) %>%
-  summarise(
-    danceability = mean(danceability),
-    energy = mean(energy),
-    valence = mean(valence),
-    tempo = mean(tempo),
-    n = n(),
-    .groups = "drop"
-  )
-genre_scaled <- scale(
-  genre_profile[, c(
-    "danceability",
-    "energy",
-    "valence",
-    "tempo"
-  )]
-)
-```
-```{r}
-set.seed(123)
-
-wss <- sapply(1:10, function(k) {
-  kmeans(genre_scaled, centers = k, nstart = 25)$tot.withinss
-})
-
-plot(1:10, wss,
-     type = "b",
-     pch = 19,
-     frame = FALSE,
-     xlab = "Number of clusters K",
-     ylab = "Total within-clusters sum of squares",
-     main = "Elbow Method for Optimal K")
-```
-```{r}
-set.seed(123)
-
-k4 <- kmeans(genre_scaled, centers = 4, nstart = 25)
-
-genre_profile$cluster <- factor(k4$cluster)
-library(ggplot2)
-
-ggplot(genre_profile,
-       aes(x = energy,
-           y = danceability,
-           color = cluster,
-           label = track_genre)) +
-  geom_point(size = 3, alpha = 0.8) +
-  labs(
-    title = "Genre Clusters Based on Audio Features",
-    x = "Energy (mean)",
-    y = "Danceability (mean)",
-    color = "Cluster"
-  ) +
-  theme_minimal()
-ggplot(genre_profile,
-       aes(x = valence,
-           y = tempo,
-           color = cluster)) +
-  geom_point(size = 3, alpha = 0.8) +
-  labs(
-    title = "Cluster Visualization: Valence vs Tempo",
-    x = "Valence (mean)",
-    y = "Tempo (mean)",
-    color = "Cluster"
-  ) +
-  theme_minimal()
-table(genre_profile$cluster)
-```
-```{r}
-spo1 <- spo1 %>%
-  left_join(
-    genre_profile[, c("track_genre", "cluster")],
-    by = "track_genre"
-  )
-table(spo1$cluster)
 ggplot(spo1,
        aes(x = danceability,
            y = popularity,
-           color = cluster)) +
+           color = family)) +
   geom_point(alpha = 0.4) +
   labs(
-    title = "Popularity vs Danceability by Cluster",
+    title = "Popularity vs Danceability by Music Family",
     x = "Danceability",
     y = "Popularity",
-    color = "Cluster"
+    color = "Family"
   ) +
   theme_minimal()
+
 ggplot(spo1,
        aes(x = energy,
            y = popularity,
-           color = cluster)) +
+           color = family)) +
   geom_point(alpha = 0.4) +
   labs(
-    title = "Popularity vs Energy by Cluster",
+    title = "Popularity vs Energy by Music Family",
     x = "Energy",
     y = "Popularity",
-    color = "Cluster"
+    color = "Family"
   ) +
   theme_minimal()
+
 ggplot(spo1,
        aes(x = valence,
            y = popularity,
-           color = cluster)) +
+           color = family)) +
   geom_point(alpha = 0.4) +
   labs(
-    title = "Popularity vs Valence by Cluster",
+    title = "Popularity vs Valence by Music Family",
     x = "Valence",
     y = "Popularity",
-    color = "Cluster"
+    color = "Family"
   ) +
   theme_minimal()
+
 ggplot(spo1,
        aes(x = tempo,
            y = popularity,
-           color = cluster)) +
+           color = family)) +
   geom_point(alpha = 0.4) +
   labs(
-    title = "Popularity vs Tempo by Cluster",
+    title = "Popularity vs Tempo by Music Family",
     x = "Tempo",
     y = "Popularity",
-    color = "Cluster"
+    color = "Family"
   ) +
   theme_minimal()
+```
+
+```{r}
+anova_cluster <- aov(popularity ~ cluster, data = spo1)
+summary(anova_cluster)
+tab    <- summary(anova_cluster)[[1]]
+eta_sq <- tab["cluster", "Sum Sq"] / sum(tab[, "Sum Sq"])
+cat(sprintf("Eta squared (η²) = %.4f\n", eta_sq))
+tukey_cluster <- TukeyHSD(anova_cluster)
+xkablesummary(tukey_cluster)
 ```
 ```{r}
 cluster_genre_tab <- table(spo1$cluster, spo1$track_genre)
 cluster_genre_tab[1:4, 1:10]
 ```
 ```{r}
-ggplot(spo1,
-       aes(x = danceability, fill = track_genre)) +
-  geom_bar(position = "fill") +
-  labs(
-    title = "Genre Distribution across Danceability Levels",
-    x = "Danceability Level",
-    y = "Proportion",
-    fill = "Genre"
-  ) +
-  theme_minimal()
+anova_cluster <- aov(popularity ~ cluster, data = spo1)
+summary(anova_cluster)
 ```
 
 Meg-
