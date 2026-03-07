@@ -94,6 +94,8 @@ spo1 <- spo1[spo1$tempo > 0, ]
 sum(spo1$tempo == 0)
 write.csv(spo1,"cleaned_spodata.csv")
 ```
+2.3 Further Data Transformation
+To analyze the relationship between genre and audio features or popularity more effectively, the original dataset contains too many genres (over 120) to interpret clearly. Therefore, we manually categorized all genres into four broader genre families based on common musical classifications and similarities in musical style. Each family is expected to share similar musical characteristics and, to some extent, similar audio feature patterns.
 
 ```{r}
 spo1$family <- case_when(
