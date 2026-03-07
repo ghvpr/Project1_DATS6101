@@ -1,5 +1,5 @@
 ---
-title: "Project 1"
+title: "Project 1 - Exploring the Determinants of Spotify Track Popularity: Audio Features, Genre, and Explicit Content"
 author: "Ruofei(Sophia) Du, Meghan Phillips, Harivinay Gujjula"
 date: "`r Sys.Date()`"
 output:
@@ -23,6 +23,7 @@ output:
 # Then load the package in your R session.
 library(ezids)
 library(dplyr)
+library(ggplot2)
 ```
 
 ```{r setup, include=FALSE}
