@@ -35,15 +35,19 @@ options(scientific=T, digits = 3)
 # options(scipen=9, digits = 3) 
 ```
 
-1. Introduction 
+#1. Introduction 
+
+##1.1 About the Data Set
+
 Our dataset was obtained from Kaggle by researching music-related dataset. The dataset contains more than 114,000 observations and 21 variables related to Spotify tracks. These variables include track information such as track name and artist name, the popularity of the songs, as well as several audio features, including energy, danceability, valence, tempo, and other characteristics that describe the musical properties of each song.
+
 ```{r}
 spo <- read.csv("spotifydataset.csv")
 str(spo)
 summary(spo)
 dim(spo)
 ```
-2.1 Research Questions
+##1.2 Research Questions
 
 There are many possible ways to explore this dataset. In this project, we are particularly interested in understanding what makes a song popular.
 
@@ -59,13 +63,16 @@ If audio features do not directly affect popularity, do they influence how a son
 
 Does the presence of explicit content make a song more or less popular?
 
+#2 Data Preparation 
 
-2.2 Data Cleaning
+##2.1 Data Cleaning
+
 To investigate these research questions, we first clean the dataset and remove columns that are not relevant to our analysis.
 
 For example, the tempo (BPM) of a song cannot realistically be 0. Although this value is not recorded as NA in the dataset, it still represents an invalid observation and should be removed during the data cleaning process.
 
 Based on the information provided in the dataset, we focus on variables that may influence song popularity. In particular, we examine whether audio features or genre have any effect on the popularity of songs. Therefore, we select the relevant variables, including popularity, several audio features (danceability, energy, valence, and tempo), the explicit content indicator, and the track genre.
+
 ```{r}
 spo1 <- spo[, c(
   "popularity",
@@ -95,8 +102,10 @@ spo1 <- spo1[spo1$tempo > 0, ]
 sum(spo1$tempo == 0)
 write.csv(spo1,"cleaned_spodata.csv")
 ```
-2.3 Further Data Transformation
+##2.2 Further Data Transformation
 To analyze the relationship between genre and audio features or popularity more effectively, the original dataset contains too many genres (over 120) to interpret clearly. Therefore, we manually categorized all genres into four broader genre families based on common musical classifications and similarities in musical style. Each family is expected to share similar musical characteristics and, to some extent, similar audio feature patterns.
+
+To ensure smmothy analysis, we make sure that the family column was properly turned into factors as it’s a categorical variable. 
 
 ```{r}
 spo1$family <- case_when(
@@ -124,12 +133,18 @@ spo1$family <- case_when(
   
   TRUE ~ "Acoustic/Classical"
 )
-
-
 spo1$family <- as.factor(spo1$family)
 table(spo1$family)
 ```
-Danceability vs Energy
+
+#Section 3 Exploratory Data Analysis
+
+This section starts with exploring the relationships among variables through visualizations and descriptive analysis, followed by simple statistical tests to evaluate whether the observed patterns worth further analysis.
+
+##3.1 Genre Families and Audio Feature Patterns
+
+To better understand the relationship between genre families and audio features, we first examine how different genres are distributed across the audio-feature space. Since four audio feature variables are considered in this study (danceability, energy, valence, and tempo), we visualize their relationships using two scatterplots. 
+
 ```{r}
 genre_profile <- spo1 %>%
   group_by(track_genre) %>%
@@ -150,21 +165,42 @@ genre_profile <- genre_profile %>%
 ggplot(genre_profile,
        aes(x = energy, y = danceability, color = family)) +
   geom_point(size = 3, alpha = 0.8) +
-  labs(title = "Genre Distribution by Music Family: Energy vs Danceability",
+stat_ellipse(aes(group = family), linewidth = 0.8) +
+  labs(title = "Audio Features Distribution by Genre Family: Energy and Danceability",
        x = "Energy (mean)", y = "Danceability (mean)", color = "Family") +
   theme_minimal()
-
-
 ```
-Valence vs Tempo
+
+The first plot shows the relationship between **energy** and **danceability** across genre families. The scatterplot illustrates how different genres are distributed across the energy and danceability feature space. Each point represents the mean audio feature values for a specific genre. The ellipses highlight the approximate distribution regions of the four genre families.
+
 ```{r}
 ggplot(genre_profile,
        aes(x = valence, y = tempo, color = family)) +
   geom_point(size = 3, alpha = 0.8) +
-  labs(title = "Genre Distribution by Music Family: Valence vs Tempo",
+stat_ellipse(aes(group = family), linewidth = 0.8) +
+  labs(title = "Audio Features Distribution by Genre Family: Valence and Tempo",
        x = "Valence (mean)", y = "Tempo (mean)", color = "Family") +
   theme_minimal()
 ```
+
+The second plot visualizes the relationship between **valence** and **tempo** across genre families. Compared with the first scatterplot (**energy** and **danceability**), the clusters among genre families overlap substantially and appear less distinct. Although some tendencies can still be observed, such as relatively higher tempo values for **Electronic/Dance** family and lower valence for **Acoustic/Classical** family, the overlap among families is much stronger than in the energy/danceability feature space. This suggests that **valence** and **tempo** alone are less effective at differentiating genres than **energy** and **danceability**.
+
+Therefore, based on these visualizations, **energy** and **danceability** are expected to play a stronger role in distinguishing musical styles across genre families.
+
+##3.2 Distribution of Popularity and Audio Features
+
+
+
+
+
+
+
+
+
+
+
+
+
 ```{r}
 
 anova_pop_fam <- aov(popularity ~ family, data = spo1)
