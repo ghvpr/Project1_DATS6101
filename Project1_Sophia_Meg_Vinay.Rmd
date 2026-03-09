@@ -365,222 +365,15 @@ ggplot(spo1, aes(x = pop_group, y = tempo, fill = pop_group)) +
 ```
 The boxplot for danceability shows a slightly increase in median values as popularity increases. Songs in “Very High” popularity group tend to have slightly higher danceability compared to tracks with less popularity.  However, the distribution still overlaps substantially across all groups, suggesting that the effect is relatively weak. 
 The distribution of energy across different popularity groups are very similar. Median values and interquartile ranges overlap heavily, suggesting that the energy level does not differ significantly between more popular and less popular songs. 
+
 Valence also shows very little differences across popularity groups, the median values is close to each other across all popularity levels, suggesting that valence is not a strong influence on songs’ popularity. 
+
 Similarly, tempo share a similar distribution with valence and energy. The tempo distribution are nearly identical across popularity levels. Most songs fall within the same tempo range regardless of their popularity, suggesting that tempo is anot a strong influence on popularity. 
+
 Overall, the boxplots suggests that audio features only slightly influence the popularity of a songs. While danceability appears slightly higher for the most popular songs, the distribution of valence, energy and tempo remain largely similar across all popularity groups. This indicates that the individual audio features are unlikely to be a strong influence on popularity. Danceability is the strongest feature to affect the popularity among the four audio features. 
 
+To statistically evaluate whether audio features differ across popularity groups, one-way ANOVA test were conducted for each feature.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r}
-
-anova_pop_fam <- aov(popularity ~ family, data = spo1)
-summary(anova_pop_fam)
-
-tab_pop <- summary(anova_pop_fam)[[1]]
-eta_sq_pop <- tab_pop[1, "Sum Sq"] / sum(tab_pop[, "Sum Sq"])
-cat(sprintf("Eta squared (η²) = %.4f\n", eta_sq_pop))
-```
-```{r}
-spo1 %>%
-  group_by(family) %>%
-  summarise(mean_popularity = mean(popularity)) %>%
-  arrange(desc(mean_popularity))
-```
-```{r}
-spo1 %>%
-  group_by(family) %>%
-  summarise(
-    danceability = mean(danceability),
-    energy       = mean(energy),
-    valence      = mean(valence),
-    tempo        = mean(tempo)
-  )
-```
-```{r}
-get_eta_sq_fam <- function(model) {
-  tab <- summary(model)[[1]]
-  round(tab[1, "Sum Sq"] / sum(tab[, "Sum Sq"]), 4)
-}
-anova_dance_fam   <- aov(danceability ~ family, data = spo1)
-anova_energy_fam  <- aov(energy       ~ family, data = spo1)
-anova_valence_fam <- aov(valence      ~ family, data = spo1)
-anova_tempo_fam   <- aov(tempo        ~ family, data = spo1)
-
-summary(anova_dance_fam)
-summary(anova_energy_fam)
-summary(anova_valence_fam)
-summary(anova_tempo_fam)
-
-cat("Eta squared:\n")
-cat(sprintf("  Danceability: %.4f\n", get_eta_sq_fam(anova_dance_fam)))
-cat(sprintf("  Energy:       %.4f\n", get_eta_sq_fam(anova_energy_fam)))
-cat(sprintf("  Valence:      %.4f\n", get_eta_sq_fam(anova_valence_fam)))
-cat(sprintf("  Tempo:        %.4f\n", get_eta_sq_fam(anova_tempo_fam)))
-```
-
-Q2
-Now let's start with EDA. First, we plot some ggplots to observe the distribution. 
-```{r}
-library(ggplot2)
-ggplot(spo1, aes(x = popularity)) +
-  geom_histogram(fill = "skyblue", bins = 30, color = "white") +
-  labs(
-    title = "Distribution of Track Popularity",
-    x = "Popularity Score",
-    y = "Count"
-  ) +
-  theme_minimal()
-```
-```{r}
-ggplot(spo1, aes(x = danceability)) +
-  geom_histogram(fill = "darkgreen", bins = 30, color = "white") +
-  labs(
-    title = "Distribution of Danceability",
-    x = "Danceability",
-    y = "Count"
-  ) +
-  theme_minimal()
-```
-```{r}
-ggplot(spo1, aes(x = energy)) +
-  geom_histogram(fill = "salmon", bins = 30, color = "white") +
-  labs(
-    title = "Distribution of Energy",
-    x = "Energy",
-    y = "Count"
-  ) +
-  theme_minimal()
-```
-```{r}
-ggplot(spo1, aes(x = valence)) +
-  geom_histogram(fill = "violet", bins = 30, color = "white") +
-  labs(
-    title = "Distribution of Valence",
-    x = "Valence",
-    y = "Count"
-  ) +
-  theme_minimal()
-```
-```{r}
-ggplot(spo1, aes(x = tempo)) +
-  geom_histogram(fill = "orange", bins = 30, color = "white") +
-  labs(
-    title = "Distribution of Tempo",
-    x = "Tempo (BPM)",
-    y = "Count"
-  ) +
-  theme_minimal()
-```
-
-```{r}
-ggplot(spo1, aes(x = danceability, y = popularity)) +
-  geom_point(color = "darkgreen", alpha = 0.5) +
-  labs(
-    title = "Popularity vs Danceability",
-    x = "Danceability",
-    y = "Popularity"
-  ) +
-  theme_minimal()
-```
-```{r}
-ggplot(spo1, aes(x = energy, y = popularity)) +
-  geom_point(color = "salmon", alpha = 0.5) +
-  labs(
-    title = "Popularity vs Danceability",
-    x = "Energy",
-    y = "Popularity"
-  ) +
-  theme_minimal()
-```
-```{r}
-ggplot(spo1, aes(x = valence, y = popularity)) +
-  geom_point(color = "violet", alpha = 0.5) +
-  labs(
-    title = "Popularity vs Valence",
-    x = "Valence",
-    y = "Popularity"
-  ) +
-  theme_minimal()
-```
-```{r}
-ggplot(spo1, aes(x = tempo, y = popularity)) +
-  geom_point(color = "orange", alpha = 0.5) +
-  labs(
-    title = "Popularity vs Tempo",
-    x = "Tempo",
-    y = "Popularity"
-  ) +
-  theme_minimal()
-```
-
-The diagram is not clear.
-```{r}
-cor(spo1$danceability, spo1$popularity)
-cor(spo1$energy, spo1$popularity)
-cor(spo1$valence, spo1$popularity)
-cor(spo1$tempo, spo1$popularity)
-```
-```{r}
-spo1$pop_group <- cut(
-  spo1$popularity,
-  breaks = c(0, 20, 40, 60, 80, 100),
-  labels = c("Very Low", "Low", "Medium", "High", "Very High"),
-  include.lowest = TRUE
-)
-
-spo1$pop_group <- as.factor(spo1$pop_group)
-table(spo1$pop_group)
-```
-```{r}
-ggplot(spo1, aes(x = pop_group, y = danceability, fill = pop_group)) +
-  geom_boxplot() +
-  labs(
-    title = "Danceability across Popularity Groups",
-    x = "Popularity Group",
-    y = "Danceability"
-  ) +
-  theme_minimal() +
-  guides(fill = "none")
-ggplot(spo1, aes(x = pop_group, y = energy, fill = pop_group)) +
-  geom_boxplot() +
-  labs(
-    title = "Energy across Energy Groups",
-    x = "Popularity Group",
-    y = "Energy"
-  ) +
-  theme_minimal() +
-  guides(fill = "none")
-ggplot(spo1, aes(x = pop_group, y = valence, fill = pop_group)) +
-  geom_boxplot() +
-  labs(
-    title = "Valence across Popularity Groups",
-    x = "Popularity Group",
-    y = "Valence"
-  ) +
-  theme_minimal() +
-  guides(fill = "none")
-ggplot(spo1, aes(x = pop_group, y = tempo, fill = pop_group)) +
-  geom_boxplot() +
-  labs(
-    title = "Tempo across Popularity Groups",
-    x = "Popularity Group",
-    y = "Tempo"
-  ) +
-  theme_minimal() +
-  guides(fill = "none")
-```
 ```{r}
 anova_dance <- aov(danceability ~ pop_group, data = spo1)
 summary(anova_dance)
@@ -612,6 +405,69 @@ results <- rbind(
 results <- as.data.frame(results)
 results
 ```
+The p value of all four audio features vs popularity levels are extremely small, indicating that all four audio features show statistically significant differences across popularity levels. However, the effect sizes (η²) are relatively small.
+Among the features, danceability exhibits the strongest relationship with popularity groups (F = 292.1, η² = 0.0102), followed by valence (F = 166.1, η² = 0.0058), energy (F = 97.8, η² = 0.0034), and tempo (F = 29.4, η² = 0.0010).
+Despite statistical significance, the small η² values indicate that popularity groups explain only a very small portion of the variance in these audio characteristics(~1%). This suggests that although certain audio features such as danceability may slightly differ across popularity levels, audio features alone are unlikely to be strong determinants of song popularity.
+
+## 3.4 Genre Families and Popularity
+
+In addition to audio features, genre may be a factor to influence how popular a song is. Different genres often reflect distinct musical styles and audience preferences, which may affect listener engagement and streaming performance. Therefore, we further examine whether song popularity differs across the four genre families defined earlier.
+
+```{r}
+anova_pop_fam <- aov(popularity ~ family, data = spo1)
+summary(anova_pop_fam)
+tab_pop <- summary(anova_pop_fam)[[1]]
+eta_sq_pop <- tab_pop[1, "Sum Sq"] / sum(tab_pop[, "Sum Sq"])
+cat(sprintf("Eta squared (η²) = %.4f\n", eta_sq_pop))
+```
+The ANOVA result show that popularity differs across different genre families. (F = 237, p < 0.001). However, the effect size is relatively small (η² = 0.0062), indicating that genre explains only a small proportion of the variance in song popularity.
+
+```{r}
+spo1 %>%
+  group_by(family) %>%
+  summarise(mean_popularity = mean(popularity)) %>%
+  arrange(desc(mean_popularity))
+```
+The average popularity scores show that Rock/Metal and Latin/Pop genres have slightly higher popularity levels, while Acoustic/Classical songs tend to have lower popularity scores.
+
+```{r}
+spo1 %>%
+  group_by(family) %>%
+  summarise(
+    danceability = mean(danceability),
+    energy       = mean(energy),
+    valence      = mean(valence),
+    tempo        = mean(tempo)
+  )
+```
+```{r}
+get_eta_sq_fam <- function(model) {
+  tab <- summary(model)[[1]]
+  round(tab[1, "Sum Sq"] / sum(tab[, "Sum Sq"]), 4)
+}
+anova_dance_fam   <- aov(danceability ~ family, data = spo1)
+anova_energy_fam  <- aov(energy       ~ family, data = spo1)
+anova_valence_fam <- aov(valence      ~ family, data = spo1)
+anova_tempo_fam   <- aov(tempo        ~ family, data = spo1)
+
+summary(anova_dance_fam)
+summary(anova_energy_fam)
+summary(anova_valence_fam)
+summary(anova_tempo_fam)
+
+cat("Eta squared:\n")
+cat(sprintf("  Danceability: %.4f\n", get_eta_sq_fam(anova_dance_fam)))
+cat(sprintf("  Energy:       %.4f\n", get_eta_sq_fam(anova_energy_fam)))
+cat(sprintf("  Valence:      %.4f\n", get_eta_sq_fam(anova_valence_fam)))
+cat(sprintf("  Tempo:        %.4f\n", get_eta_sq_fam(anova_tempo_fam)))
+```
+Further analysis reveals that genre families strongly differ in their audio characteristics. For example, Electronic/Dance songs exhibit higher danceability and energy, while Rock/Metal songs show the highest energy but lower danceability. The effect sizes for these differences are substantially larger, particularly for energy (η² = 0.163) and danceability (η² = 0.087).
+
+However, the actual means are not as strongly different as expected statistically. This is because the η² is so small that the result only represents a small portion of the variance. 
+
+##3.5 Relationship between Audio Features and Popularities By Genre Families
+
+To further visualize how the relationship between audio features and popularity may vary across different music styles, scatterplots colored by genre family are shown. 
 
 ```{r}
 ggplot(spo1,
@@ -666,24 +522,11 @@ ggplot(spo1,
   ) +
   theme_minimal()
 ```
+The scatterplots colored by genre family provide additional insights into the relationship between audio features and popularity. Although different genre families occupy slightly different regions of the audio feature space, the relationship between audio features and popularity remains weak across all genres.
+The points are widely dispersed with heavy overlap between genre families, indicating that songs from different genres can have similar popularity levels across a wide range of audio feature values.
+These visual patterns are consistent with the earlier statistical results, suggesting that neither individual audio features nor genre families alone strongly statistically determine song popularity. This is a result that within expectation, because the dataset is extremely large. 
 
-```{r}
-anova_cluster <- aov(popularity ~ cluster, data = spo1)
-summary(anova_cluster)
-tab    <- summary(anova_cluster)[[1]]
-eta_sq <- tab["cluster", "Sum Sq"] / sum(tab[, "Sum Sq"])
-cat(sprintf("Eta squared (η²) = %.4f\n", eta_sq))
-tukey_cluster <- TukeyHSD(anova_cluster)
-xkablesummary(tukey_cluster)
-```
-```{r}
-cluster_genre_tab <- table(spo1$cluster, spo1$track_genre)
-cluster_genre_tab[1:4, 1:10]
-```
-```{r}
-anova_cluster <- aov(popularity ~ cluster, data = spo1)
-summary(anova_cluster)
-```
+
 
 
 Can we see any differences in Genre when we look at Tempo x Popularity? There are too many points! A regular scatterplot was done, coloring each point by genre. Since there are over 100 genres, it was difficult to see anything. Plus, it appears that the scatterplot added layers to the dots, instead of some blend. This helped us with our ideas about clustering for project two.
