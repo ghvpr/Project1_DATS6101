@@ -713,7 +713,7 @@ spo1_bottom_pop <- subset(spo1, popularity < lower)
 t.test(popularity ~ explicit, data = spo1_bottom_pop)
 ```
 
-This splits the most popular songs into sections based on popularity and does a t test on the groups in order to compare means in explicit vs non-explicit tracks. Mean popularity for explicit tracks were not higher throughout the different all levels of popularity. This lead to another question of wanting to look at the top 10% most popular songs and top 5%. Popularity was slightly more in these. Then we wanted to run correlation coefficient to really know.
+#This splits the most popular songs into sections based on popularity and does a t test on the groups in order to compare means in explicit vs non-explicit tracks. Mean popularity for explicit tracks were not higher throughout the different all levels of popularity. This lead to another question of wanting to look at the top 10% most popular songs and top 5%. Popularity was slightly more in these. Then we wanted to run correlation coefficient to really know.
 ```{r}
 cut_pop90<- quantile(spo1$popularity, 0.90)
 spo1_pop90 <- subset(spo1, popularity > cut_pop90)
@@ -893,3 +893,7 @@ p
 ggsave("tempo_corr_across_groups.png", p, width = 7, height = 4.5, dpi = 300)
 
 ```
+
+Our general findings were that Popularity has no significant correlation with danceability, energy, tempo and valence, genres within the same music family share similar audio features, and the popularities differ for different families, and no correlation was found between explicit songs and popularity. 
+
+
