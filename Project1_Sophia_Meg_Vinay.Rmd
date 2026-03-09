@@ -728,7 +728,7 @@ t.test(popularity ~ explicit, data = spo1_pop95)
 ```{r}
 spo1$explicit_num<- as.numeric(spo1$explicit)
 cor(spo1$popularity, spo1$explicit_num)
-````
+```
 
 
 #Splitting popularity by values 
