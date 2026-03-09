@@ -503,23 +503,23 @@ anova_cluster <- aov(popularity ~ cluster, data = spo1)
 summary(anova_cluster)
 ```
 
-Meg-
-Can we see any differences in Genre when we look at Tempo x Popularity? There are too many points! 
+
+Can we see any differences in Genre when we look at Tempo x Popularity? There are too many points! A regular scatterplot was done, coloring each point by genre. Since there are over 100 genres, it was difficult to see anything. Plus, it appears that the scatterplot added layers to the dots, instead of some blend. This helped us with our ideas about clustering for project two.
 
 ```{r}
 ggplot(spo1, aes(x = tempo, y = popularity, color= track_genre)) + geom_point(alpha = 0.5)
 ```
-What is another way to look at plots by Genre? Possibly in facets!
+What is another way to look at plots by Genre? Possibly in facets! This allows us to see the tempo by popularity for each individual genre at a higher level, showing differences between genres. 
 ```{r}
 ggplot(spo1, aes(x = tempo, y = popularity)) + geom_point(color= "blue", alpha = 0.3) + facet_wrap(~ track_genre) 
 ```
 
-Are explicit tracks more or less popular than non-explicit tracks?
-we want to do a t-test to check:
+Getting to our EDA question, Are explicit tracks more or less popular than non-explicit tracks?
+we want to do a t-test to check. This showed comparison of average popularity between explicit and non-explicit tracks. Explicit songs had a higher mean popularity (36.5) compared to non-explicit songs (32.9). The difference was statistically significant (t = -14, with p value of <2e-16. The 95% confidence interval for the difference in means was (-4.02, -3.02), which showed that  explicit tracks are on average between 3.02 and 4.02 popularity points higher than non-explicit tracks. While this could suggest that explicit content is associated with higher popularity, we want to do some more test to get a better picture because it doesn't seem like that is a very big difference in popularity score and we must remember that this is such a large sample size, as well as the fact that statistically significant does not mean correlation.
 ```{r}
 t.test(popularity ~ explicit, data = spo1)
 ```
-this returns a p-value <2e-16, which is significant
+
 ```{r}
 lower <- quantile(spo1$popularity, 0.25, na.rm = TRUE)
 upper <- quantile(spo1$popularity, 0.75, na.rm = TRUE)
@@ -530,6 +530,8 @@ t.test(popularity ~ explicit, data = spo1_middle_pop)
 spo1_bottom_pop <- subset(spo1, popularity < lower)
 t.test(popularity ~ explicit, data = spo1_bottom_pop)
 ```
+
+This splits the most popular songs into sections based on popularity and does a t test on the groups in order to compare means in explicit vs non-explicit tracks. Mean popularity for explicit tracks were not higher throughout the different all levels of popularity. This lead to another question of wanting to look at the top 10% most popular songs and top 5%. Popularity was slightly more in these. Then we wanted to run correlation coefficient to really know.
 ```{r}
 cut_pop90<- quantile(spo1$popularity, 0.90)
 spo1_pop90 <- subset(spo1, popularity > cut_pop90)
@@ -538,6 +540,15 @@ spo1_pop95 <- subset(spo1, popularity > cut_pop95)
 t.test(popularity ~ explicit, data = spo1_pop90)
 t.test(popularity ~ explicit, data = spo1_pop95)
 ```
+
+#Correlation between explicit and popularity- shows extremely low (r = 0.044). This indicates that while the difference is statistically detectable due to the large sample size, whether a track is explicit explains very little of the overall variation in popularity. Therefore we must note the difference between a statistical significance versus very very low correllation. 
+
+```{r}
+spo1$explicit_num<- as.numeric(spo1$explicit)
+cor(spo1$popularity, spo1$explicit_num)
+````
+
+
 #Splitting popularity by values 
 ```{r}
 pop_20df <- spo1 %>%
@@ -551,12 +562,6 @@ pop_80df <- spo1 %>%
 pop_100df <- spo1 %>%
   filter(popularity >= 80 & popularity <= 100)
 ```
-#Correlation between explicit and popularity- shows extremely low
-```{r}
-spo1$explicit_num<- as.numeric(spo1$explicit)
-cor(spo1$popularity, spo1$explicit_num)
-````
-
 #Calculating correlation values of audio features(danceability, energy, tempo and valence) to popularity for each group
 
 ```{r}
