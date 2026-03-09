@@ -137,14 +137,11 @@ spo1$family <- as.factor(spo1$family)
 table(spo1$family)
 ```
 
-#Section 3 Exploratory Data Analysis
 
+#Section 3 Exploratory and Statistical Data Analysis
 This section starts with exploring the relationships among variables through visualizations and descriptive analysis, followed by simple statistical tests to evaluate whether the observed patterns worth further analysis.
-
 ##3.1 Genre Families and Audio Feature Patterns
-
 To better understand the relationship between genre families and audio features, we first examine how different genres are distributed across the audio-feature space. Since four audio feature variables are considered in this study (danceability, energy, valence, and tempo), we visualize their relationships using two scatterplots. 
-
 ```{r}
 genre_profile <- spo1 %>%
   group_by(track_genre) %>%
@@ -170,9 +167,7 @@ stat_ellipse(aes(group = family), linewidth = 0.8) +
        x = "Energy (mean)", y = "Danceability (mean)", color = "Family") +
   theme_minimal()
 ```
-
 The first plot shows the relationship between **energy** and **danceability** across genre families. The scatterplot illustrates how different genres are distributed across the energy and danceability feature space. Each point represents the mean audio feature values for a specific genre. The ellipses highlight the approximate distribution regions of the four genre families.
-
 ```{r}
 ggplot(genre_profile,
        aes(x = valence, y = tempo, color = family)) +
@@ -182,12 +177,199 @@ stat_ellipse(aes(group = family), linewidth = 0.8) +
        x = "Valence (mean)", y = "Tempo (mean)", color = "Family") +
   theme_minimal()
 ```
-
 The second plot visualizes the relationship between **valence** and **tempo** across genre families. Compared with the first scatterplot (**energy** and **danceability**), the clusters among genre families overlap substantially and appear less distinct. Although some tendencies can still be observed, such as relatively higher tempo values for **Electronic/Dance** family and lower valence for **Acoustic/Classical** family, the overlap among families is much stronger than in the energy/danceability feature space. This suggests that **valence** and **tempo** alone are less effective at differentiating genres than **energy** and **danceability**.
-
 Therefore, based on these visualizations, **energy** and **danceability** are expected to play a stronger role in distinguishing musical styles across genre families.
 
 ##3.2 Distribution of Popularity and Audio Features
+
+Before analyzing the relationships between variables, it is useful to first understand the overall distribution of popularity and the 4 audio features in the dataset. Examining the distributions helps identify general patterns, potential skewness, and the range of values present in the data.
+
+The following 5 histograms illustrate the distributions of track popularity and four key audio features: danceability, energy, valence, and tempo. 
+
+```{r}
+library(ggplot2)
+ggplot(spo1, aes(x = popularity)) +
+  geom_histogram(fill = "skyblue", bins = 30, color = "white") +
+  labs(
+    title = "Distribution of Track Popularity",
+    x = "Popularity Score",
+    y = "Count"
+  ) +
+  theme_minimal()
+sum(spo1$popularity == 0)
+```
+The distribution of the popularity is highly right-skewed. A large number of very low popularity scores were observed on the left-hand side near zero. As popularity increases, the number of tracks gradually decreases. The summary showed that we have over 16000 zero values, which is more than 10% of the data set. 
+The skewed distribution may influence subsequent analysis. A large portion of the tracks have extremely low popularity values, which might result in a weak correlation between audio features and popularity. To better understand and reduce these effects, the group popularity was sliced into five ranges to compare the audio features across these popularity groups.
+
+```{r}
+ggplot(spo1, aes(x = danceability)) +
+  geom_histogram(fill = "darkgreen", bins = 30, color = "white") +
+  labs(
+    title = "Distribution of Danceability",
+    x = "Danceability",
+    y = "Count"
+  ) +
+  theme_minimal()
+```
+The distribution of danceability appears an approximate bell-shaped, with most tracks concentrated between 0.4 and 0.7 danceability. This suggests that a large majority of the dataset have a moderate level of danceability, while the songs with extremely high or extreme low danceability may be relatively rare. 
+This symmetric distribution shows that the danceability is relatively balanced among the dataset, which could result in an easier comparison for the danceability with different popularity ranges. 
+
+```{r}
+ggplot(spo1, aes(x = energy)) +
+  geom_histogram(fill = "salmon", bins = 30, color = "white") +
+  labs(
+    title = "Distribution of Energy",
+    x = "Energy",
+    y = "Count"
+  ) +
+  theme_minimal()
+```
+The distribution of energy is different from danceability. It is every left-skewed, indicating that there are large numbers of songs with higher energy comparing to lower energy. The majority of the songs are concentrated between approximately 0.6 and 0.9. The lower the energy, the lesser the frequency. 
+This suggests that the songs in the dataset tend to be energetic, which is consistent with the characteristics of morden music, where majority of the songs produced are lounder, faster and more dynamic. The soft and calmer songs may represents a relative smaller portion in the dataset. 
+```{r}
+ggplot(spo1, aes(x = valence)) +
+  geom_histogram(fill = "violet", bins = 30, color = "white") +
+  labs(
+    title = "Distribution of Valence",
+    x = "Valence",
+    y = "Count"
+  ) +
+  theme_minimal()
+```
+The valence in spotify means that the higher the valence is, the song is more likely to be happier and positive. The distribution of valence is relatively spread out very average aross full range between 0 and 1, without a strong skew toward either low or high valence. A slightly larger number of songs appear in mid-range valence, but overall the distribution is very even. 
+
+The pattern suggests that the emotional tone of songs varies a lot across the dataset. This indicates that he emotional tone is very diverse across the dataset. 
+
+```{r}
+ggplot(spo1, aes(x = tempo)) +
+  geom_histogram(fill = "orange", bins = 30, color = "white") +
+  labs(
+    title = "Distribution of Tempo",
+    x = "Tempo (BPM)",
+    y = "Count"
+  ) +
+  theme_minimal()
+```
+The distribution of tempo shows that most tracks are concentrated between 90 - 140 BPM, with the highest density around a range of 110 - 130 BPM. The very slow tempos (< 70 BPM) and extremely fast tempos (< 170 BPM) are very rare in the dataset. 
+The patterns suggest that the tempos of the songs in this dataset fall within a moderate tempo range, which matches the common characteristics of many genres of modern pop music. The very fast tracks and very slow tracks are less common. 
+
+```{r}
+ggplot(spo1, aes(x = danceability, y = popularity)) +
+  geom_point(color = "darkgreen", alpha = 0.5) +
+  labs(
+    title = "Popularity vs Danceability",
+    x = "Danceability",
+    y = "Popularity"
+  ) +
+  theme_minimal()
+```
+The scatterplot of popularity versus danceability does not show a clear linear relationship. The points scattered across all range of danceability, suggesting that the songs with both low and high danceability could achieve a wide range of popularity scores. 
+A slight positive correlation was found between danceability and popularity, but the correlation is very weak. This indicates that the danceability alone is unlikely to be a strong predictor of song popularity. 
+```{r}
+ggplot(spo1, aes(x = energy, y = popularity)) +
+  geom_point(color = "salmon", alpha = 0.5) +
+  labs(
+    title = "Popularity vs Danceability",
+    x = "Energy",
+    y = "Popularity"
+  ) +
+  theme_minimal()
+```
+The scatterplot of popularity versus energy shows an even weaker correlation than danceability and popularity. Songs with both high and low energy levels appear across the entire range of popularity. Although slightly more songs with high energy concentrated in the higher popularity range, the correlation is very weak. This suggest that the energy alone is not a strong predictor of song popularity. 
+```{r}
+ggplot(spo1, aes(x = valence, y = popularity)) +
+  geom_point(color = "violet", alpha = 0.5) +
+  labs(
+    title = "Popularity vs Valence",
+    x = "Valence",
+    y = "Popularity"
+  ) +
+  theme_minimal()
+```
+Similarly, the relationship between valence and popularity appears weak. Songs with both positive and negative emotional tones distributed across a wide popularity range. The scatterplot suggests that the emotional tone is not likely to be a strong predictor for a song’s popularity. 
+```{r}
+ggplot(spo1, aes(x = tempo, y = popularity)) +
+  geom_point(color = "orange", alpha = 0.5) +
+  labs(
+    title = "Popularity vs Tempo",
+    x = "Tempo",
+    y = "Popularity"
+  ) +
+  theme_minimal()
+```
+The scatterplot of popularity versus tempo also shows no obvious relationship. Most songs fall within the moderate tempo range observed earlier, yet their popularity scores still vary substantially. This indicates that tempo alone does not have a strong influence on the popularity of a track.
+
+Overall, the scatterplots suggest none of the individual audio features show a strong direct relationship with popularity. Within all four audio features, only danceability shows a relatively stronger.
+```{r}
+cor(spo1$danceability, spo1$popularity)
+cor(spo1$energy, spo1$popularity)
+cor(spo1$valence, spo1$popularity)
+cor(spo1$tempo, spo1$popularity)
+```
+To qualify these relationships, correlation coefficients were calculated. The result show that all correlations are very weak: danceability (0.0365), energy (0.0016), valence (-0.0402), and tempo (0.0144). These values are extremely weak linear relationships between the audio features and the popularity. This suggests that the song popularity is likely to be influenced by other factors beyond audio characteristics, such as artist popularity, broader genre trends, etc. 
+
+##3.3 Relationship between Popularity Groups and Audio Features 
+
+In the pervious part, the scatterplots did not reveal a clear relationship between four individual audio features and popularity, we further explore the data by grouping the popularity into different levels. This approach allow us to visualize whether songs with different popularity levels tend to have different audio characteristics. 
+
+```{r}
+spo1$pop_group <- cut(
+  spo1$popularity,
+  breaks = c(0, 20, 40, 60, 80, 100),
+  labels = c("Very Low", "Low", "Medium", "High", "Very High"),
+  include.lowest = TRUE
+)
+
+spo1$pop_group <- as.factor(spo1$pop_group)
+table(spo1$pop_group)
+```
+Popularity scores are divided into five different groups: Very Low (0-20), Low (20-40), Medium(40-60), High(60-80) and Very High(80-100). Now we can visualize how audio features vary across different levels of song popularity. 
+
+```{r}
+ggplot(spo1, aes(x = pop_group, y = danceability, fill = pop_group)) +
+  geom_boxplot() +
+  labs(
+    title = "Danceability across Popularity Groups",
+    x = "Popularity Group",
+    y = "Danceability"
+  ) +
+  theme_minimal() +
+  guides(fill = "none")
+ggplot(spo1, aes(x = pop_group, y = energy, fill = pop_group)) +
+  geom_boxplot() +
+  labs(
+    title = "Energy across Energy Groups",
+    x = "Popularity Group",
+    y = "Energy"
+  ) +
+  theme_minimal() +
+  guides(fill = "none")
+ggplot(spo1, aes(x = pop_group, y = valence, fill = pop_group)) +
+  geom_boxplot() +
+  labs(
+    title = "Valence across Popularity Groups",
+    x = "Popularity Group",
+    y = "Valence"
+  ) +
+  theme_minimal() +
+  guides(fill = "none")
+ggplot(spo1, aes(x = pop_group, y = tempo, fill = pop_group)) +
+  geom_boxplot() +
+  labs(
+    title = "Tempo across Popularity Groups",
+    x = "Popularity Group",
+    y = "Tempo"
+  ) +
+  theme_minimal() +
+  guides(fill = "none")
+```
+The boxplot for danceability shows a slightly increase in median values as popularity increases. Songs in “Very High” popularity group tend to have slightly higher danceability compared to tracks with less popularity.  However, the distribution still overlaps substantially across all groups, suggesting that the effect is relatively weak. 
+The distribution of energy across different popularity groups are very similar. Median values and interquartile ranges overlap heavily, suggesting that the energy level does not differ significantly between more popular and less popular songs. 
+Valence also shows very little differences across popularity groups, the median values is close to each other across all popularity levels, suggesting that valence is not a strong influence on songs’ popularity. 
+Similarly, tempo share a similar distribution with valence and energy. The tempo distribution are nearly identical across popularity levels. Most songs fall within the same tempo range regardless of their popularity, suggesting that tempo is anot a strong influence on popularity. 
+Overall, the boxplots suggests that audio features only slightly influence the popularity of a songs. While danceability appears slightly higher for the most popular songs, the distribution of valence, energy and tempo remain largely similar across all popularity groups. This indicates that the individual audio features are unlikely to be a strong influence on popularity. Danceability is the strongest feature to affect the popularity among the four audio features. 
+
+
 
 
 
